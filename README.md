@@ -1,14 +1,27 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+Kotlin multiplatform calendar component
 
-* `/composeApp` is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - `commonMain` is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    `iosMain` would be the right folder for such calls.
+Targeting Android and ios currently. Could be extended to desktop / wasm easily, but the touch interactions probably wouldn't work well.
 
-* `/iosApp` contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform, 
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+https://github.com/user-attachments/assets/b82525ae-e204-4590-b553-10b989a2d5db
 
+Gradle Import:
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+```
+implementation("io.github.big-jared:motion-calendar:0.0.1(latest release)")
+```
+
+Usage:
+```
+MotionCalender(
+    calendarState = rememberMotionCalendarState(
+        selectedDateMs = now().toEpochMilliseconds()
+    ),
+    content = { day ->
+        DayColumn()
+    }
+)
+```
+
+Display whatever content you want below the component. In the sample, I'm showing gridelines, but you can do whatever.
+
+License: MIT
