@@ -15,7 +15,7 @@ mavenPublishing {
     coordinates(
         groupId = "io.github.big-jared",
         artifactId = "motion-calendar",
-        version = "0.0.1"
+        version = "0.0.2"
     )
 
     // Configure POM metadata for the published artifact
