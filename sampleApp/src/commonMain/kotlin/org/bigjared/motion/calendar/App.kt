@@ -1,13 +1,19 @@
 package org.bigjared.motion.calendar
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.rememberSwipeableState
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -23,6 +29,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock.System.now
 import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -32,15 +39,28 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Preview
 fun App() {
     MaterialTheme {
+        val coScope = rememberCoroutineScope()
+        val swipeState = rememberSwipeableState(SwipingStates.Expanded)
         Box(Modifier.fillMaxSize()) {
-            MotionCalender(
-                calendarState = rememberMotionCalendarState(
-                    selectedDateMs = now().toEpochMilliseconds()
-                ),
-                content = { day ->
-                    DayColumn()
+            MotionCalender(calendarState = rememberMotionCalendarState(
+                selectedDateMs = now().toEpochMilliseconds(),
+                swipeState = swipeState
+            ), content = { day ->
+                Box(Modifier.fillMaxSize()) {
+                    Button(modifier = Modifier.align(Alignment.Center), onClick = {
+                        coScope.launch {
+                            swipeState.animateTo(
+                                when (swipeState.currentValue) {
+                                    SwipingStates.Expanded -> SwipingStates.Collapsed
+                                    SwipingStates.Collapsed -> SwipingStates.Expanded
+                                }
+                            )
+                        }
+                    }) {
+                        Text("Toggle")
+                    }
                 }
-            )
+            })
         }
     }
 }
@@ -51,11 +71,9 @@ fun DayColumn() {
     val containerColor = MaterialTheme.colorScheme.primary
     val fontResolver = LocalFontFamilyResolver.current
 
-    Box(modifier = Modifier.fillMaxWidth()
-        .height(1000.dp)
-        .drawWithContent {
-            gridLines(fontResolver, containerColor)
-        })
+    Box(modifier = Modifier.fillMaxWidth().height(1000.dp).drawWithContent {
+        gridLines(fontResolver, containerColor)
+    })
 }
 
 
@@ -88,9 +106,7 @@ fun ContentDrawScope.gridLines(fontResolver: FontFamily.Resolver, primaryColor: 
 
 fun LocalTime.toHourMinuteString(showMinutes: Boolean = true): String {
     val isAm = this.hour < 12
-    val minuteText =
-        if (this.minute > 10) this.minute else "0${this.minute}"
-    val hourText =
-        if (this.hour == 0) 12 else if (this.hour < 13) this.hour else this.hour - 12
-    return "$hourText${if(showMinutes)":$minuteText" else ""} ${if (isAm) "am" else "pm"}"
+    val minuteText = if (this.minute > 10) this.minute else "0${this.minute}"
+    val hourText = if (this.hour == 0) 12 else if (this.hour < 13) this.hour else this.hour - 12
+    return "$hourText${if (showMinutes) ":$minuteText" else ""} ${if (isAm) "am" else "pm"}"
 }

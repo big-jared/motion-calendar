@@ -24,6 +24,30 @@ MotionCalender(
 )
 ```
 
-Display whatever content you want below the component. In the sample, I'm showing gridelines, but you can do whatever.
+Use swipeState to control calendar directly
+
+```
+val coScope = rememberCoroutineScope()
+val swipeState = rememberSwipeableState(SwipingStates.Expanded)
+MotionCalender(calendarState = rememberMotionCalendarState(
+    selectedDateMs = now().toEpochMilliseconds(),
+    swipeState = swipeState
+), content = { day ->
+    Box(Modifier.fillMaxSize()) {
+        Button(modifier = Modifier.align(Alignment.Center), onClick = {
+            coScope.launch {
+                swipeState.animateTo(
+                    when (swipeState.currentValue) {
+                        SwipingStates.Expanded -> SwipingStates.Collapsed
+                        SwipingStates.Collapsed -> SwipingStates.Expanded
+                    }
+                )
+            }
+        }) {
+            Text("Toggle")
+        }
+    }
+})`
+```
 
 License: MIT
