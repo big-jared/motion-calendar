@@ -37,9 +37,10 @@ fun App() {
                 calendarState = rememberMotionCalendarState(
                     selectedDateMs = now().toEpochMilliseconds()
                 ),
-            ) { day ->
-                DayColumn()
-            }
+                content = { day ->
+                    DayColumn()
+                }
+            )
         }
     }
 }

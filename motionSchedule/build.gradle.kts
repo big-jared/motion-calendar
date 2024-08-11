@@ -1,3 +1,4 @@
+import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -6,6 +7,51 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
+    id("com.vanniktech.maven.publish") version "0.28.0"
+}
+
+mavenPublishing {
+    // Define coordinates for the published artifact
+    coordinates(
+        groupId = "io.github.big-jared",
+        artifactId = "motion-calendar",
+        version = "0.0.1"
+    )
+
+    // Configure POM metadata for the published artifact
+    pom {
+        name.set("KMP Library for a compose multiplatform calendar")
+        description.set("This library can be used by Android and iOS targets for the shared component of a draggable calendar")
+        inceptionYear.set("2024")
+        url.set("https://github.com/big-jared/motion-calendar")
+
+        licenses {
+            license {
+                name.set("MIT")
+                url.set("https://opensource.org/licenses/MIT")
+            }
+        }
+
+        // Specify developer information
+        developers {
+            developer {
+                id.set("big-jared")
+                name.set("Jared Guttromson")
+                email.set("jaredguttromson@gmail.com")
+            }
+        }
+
+        // Specify SCM information
+        scm {
+            url.set("https://github.com/big-jared/motion-calendar")
+        }
+    }
+
+    // Configure publishing to Maven Central
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+
+    // Enable GPG signing for all publications
+    signAllPublications()
 }
 
 kotlin {
@@ -14,6 +60,7 @@ kotlin {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
+        publishLibraryVariants("release")
     }
     
     listOf(
