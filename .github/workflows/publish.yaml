@@ -4,7 +4,7 @@ on:
     branches: [ "main" ]
 jobs:
   build:
-    name: Build
+    name: Build and publish
     runs-on: macos-latest
     steps:
       - name: Checkout code
@@ -48,28 +48,32 @@ jobs:
         run: |
           ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
 
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # required for github-action-get-previous-tag
+    release-version-on-github:
+      runs-on: ubuntu-latest
 
-      - name: Get previous tag
-        id: previoustag
-        uses: 'WyriHaximus/github-action-get-previous-tag@v1'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+          with:
+            fetch-depth: 0 # required for github-action-get-previous-tag
 
-      - name: Get next minor version
-        id: semver
-        uses: 'WyriHaximus/github-action-next-semvers@v1'
-        with:
-          version: ${{ steps.previoustag.outputs.tag }}
+        - name: Get previous tag
+          id: previoustag
+          uses: 'WyriHaximus/github-action-get-previous-tag@v1'
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create release
-        id: create_release_id
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.semver.outputs.patch }}
-          release_name: Release ${{ steps.semver.outputs.patch }}
+        - name: Get next minor version
+          id: semver
+          uses: 'WyriHaximus/github-action-next-semvers@v1'
+          with:
+            version: ${{ steps.previoustag.outputs.tag }}
+
+        - name: Create release
+          id: create_release_id
+          uses: actions/create-release@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            tag_name: ${{ steps.semver.outputs.patch }}
+            release_name: Release ${{ steps.semver.outputs.patch }}

@@ -1,3 +1,5 @@
+[![Publish Artifacts](https://github.com/big-jared/motion-calendar/actions/workflows/publish.yaml/badge.svg)](https://github.com/big-jared/motion-calendar/actions/workflows/publish.yaml)
+
 Kotlin multiplatform calendar component
 
 Targeting Android and ios currently. Could be extended to desktop / wasm easily, but the touch interactions probably wouldn't work well.
