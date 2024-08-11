@@ -9,10 +9,11 @@ https://github.com/user-attachments/assets/b82525ae-e204-4590-b553-10b989a2d5db
 Gradle Import:
 
 ```
-implementation("io.github.big-jared:motion-calendar:0.0.1(latest release)")
+implementation("io.github.big-jared:motion-calendar:(latest release)")
 ```
 
 Usage:
+
 ```
 MotionCalender(
     calendarState = rememberMotionCalendarState(
@@ -49,5 +50,7 @@ MotionCalender(calendarState = rememberMotionCalendarState(
     }
 })`
 ```
+
+Upcoming: override colors, event indicators per day, Wasm / Desktop support
 
 License: MIT
