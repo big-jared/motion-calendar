@@ -17,7 +17,6 @@ kotlin = "2.0.0"
 ktlint = "0.50.0"
 kotlin-datetime = "0.6.0"
 
-
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
