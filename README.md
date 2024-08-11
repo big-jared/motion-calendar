@@ -1,5 +1,3 @@
-[![Publish Artifacts](https://github.com/big-jared/motion-calendar/actions/workflows/publish.yaml/badge.svg)](https://github.com/big-jared/motion-calendar/actions/workflows/publish.yaml)
-
 Kotlin multiplatform calendar component
 
 Targeting Android and ios currently. Could be extended to desktop / wasm easily, but the touch interactions probably wouldn't work well.
@@ -51,6 +49,9 @@ MotionCalender(calendarState = rememberMotionCalendarState(
 })`
 ```
 
-Upcoming: override colors, event indicators per day, Wasm / Desktop support
+Upcoming: 
+- override colors (Currently just using material theme)
+- event indicators on calendar
+- Wasm / Desktop support
 
 License: MIT
