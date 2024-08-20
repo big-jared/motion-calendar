@@ -1,6 +1,5 @@
 package org.bigjared.motion.calendar
 
-import androidx.compose.animation.expandVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.text.TextMeasurer
@@ -37,7 +35,7 @@ import org.bigjared.motion.calendar.calendar.CalendarDecorationAlignment
 import org.bigjared.motion.calendar.calendar.MotionCalender
 import org.bigjared.motion.calendar.calendar.SwipingStates
 import org.bigjared.motion.calendar.calendar.rememberMotionCalendarState
-import org.bigjared.motion.calendar.dayGrid.DayGridColumn
+import org.bigjared.motion.calendar.dayGrid.DayGrid
 import org.bigjared.motion.calendar.dayGrid.TimedEvent
 import org.bigjared.motion.calendar.dayGrid.rememberDayGridState
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -80,11 +78,12 @@ fun App() {
                 dayDecoration = CalendarDayDecoration(
                     alignment = CalendarDecorationAlignment.Below,
                     content = { day ->
-                        if (events[day].isNullOrEmpty()) return@CalendarDayDecoration
-                        EventIndicator()
+                        if (events.containsKey(day)) {
+                            EventIndicator()
+                        }
                     }),
                 content = { day ->
-                    DayGridColumn(
+                    DayGrid(
                         modifier = Modifier.fillMaxWidth().height(1000.dp),
                         state = rememberDayGridState(
                             day = day,

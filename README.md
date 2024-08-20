@@ -1,6 +1,14 @@
-Kotlin multiplatform calendar component
+Compose multiplatform calendar and day grid components
 
-Targeting Android and ios currently. Could be extended to desktop / wasm easily, but the touch interactions probably wouldn't work well.
+Targeting Android, iOS, Desktop and Wasm. 
+
+Features:
+- Overridable colors
+- Configurable day decoration
+- Day, Week, and Month paging
+- Customizable event indicators
+- iOS, Android, Desktop and Wasm support
+  - The touch interactions are designed for Android and iOS, with desktop / web implementations being experimental
 
 https://github.com/user-attachments/assets/b82525ae-e204-4590-b553-10b989a2d5db
 
@@ -10,7 +18,7 @@ Gradle Import:
 implementation("io.github.big-jared:motion-calendar:(latest release)")
 ```
 
-Usage:
+Basic Usage:
 
 ```
 MotionCalender(
@@ -18,12 +26,12 @@ MotionCalender(
         selectedDateMs = now().toEpochMilliseconds()
     ),
     content = { day ->
-        DayColumn()
+        // Show your UI below calendar here
     }
 )
 ```
 
-Use swipeState to control calendar directly
+Use swipeState to control calendar expansion directly
 
 ```
 val coScope = rememberCoroutineScope()
@@ -49,9 +57,31 @@ MotionCalender(calendarState = rememberMotionCalendarState(
 })`
 ```
 
-Upcoming: 
-- override colors (Currently just using material theme)
-- event indicators on calendar
-- Wasm / Desktop support
+Implement the DayGrid component as the content of your calendar if desired.
+
+**NOTE** DayGrid is experimental and will be changing quite a bit.
+
+```
+MotionCalender(
+    calendarState = rememberMotionCalendarState(
+        selectedDateMs = now().toEpochMilliseconds(),
+        swipeState = swipeState,
+    ),
+    content = { day ->
+        DayGrid(
+            modifier = Modifier.fillMaxWidth().height(1000.dp),
+            state = rememberDayGridState(
+                day = day,
+                events = events[day] ?: emptySet(),
+            ),
+            eventUi = { rect, sampleTimedEvent ->
+                eventUi(rect, sampleTimedEvent, measurer)
+            }
+        )
+    }
+)
+```
+
+Check out the sample app for an example implementation!
 
 License: MIT

@@ -15,7 +15,7 @@ data class DayGridState<T: TimedEvent>(
     val sortedEvents = mutableStateOf<List<List<T>>>(emptyList())
     val firstEvent by lazy { events.minOf { it.start } }
 
-    // TODO, add tests, make this readable
+    // TODO, add tests, make this more readable
     init {
         val eventGroups = mutableListOf<List<T>>()
         events.sortedBy {
