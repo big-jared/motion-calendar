@@ -1,4 +1,4 @@
-package org.bigjared.motion.calendar
+package org.bigjared.motion.calendar.util
 
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
@@ -9,6 +9,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.time.Duration
 
 internal fun LocalDate.startOfWeek(): LocalDate {
     var start = this
@@ -48,3 +51,12 @@ internal fun LocalTime.toHourMinuteString(showMinutes: Boolean = true): String {
 
 internal fun LocalDate.toEpochMs(): Long = (this.toEpochDays()) * 24L * 60 * 60 * 1000
 internal fun Long.toLocalDate(): LocalDate = Instant.fromEpochMilliseconds(this).toLocalDateTime(TimeZone.currentSystemDefault()).date
+
+
+internal fun LocalTime.plus(duration: Duration): LocalTime {
+    val rollOver = this.minute + (duration.inWholeMinutes % 60) > 60
+    return LocalTime(
+        hour = min(23, this.hour + duration.inWholeHours.toInt() + if (rollOver) 1 else 0),
+        minute = this.minute + (duration.inWholeMinutes.toInt() % 60) % 60
+    )
+}

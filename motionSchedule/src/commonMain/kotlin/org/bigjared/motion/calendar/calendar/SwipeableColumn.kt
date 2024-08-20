@@ -1,4 +1,4 @@
-package org.bigjared.motion.calendar
+package org.bigjared.motion.calendar.calendar
 
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box

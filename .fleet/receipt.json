@@ -12,6 +12,16 @@
                 "ui": [
                     "compose"
                 ]
+            },
+            "desktop": {
+                "ui": [
+                    "compose"
+                ]
+            },
+            "web": {
+                "ui": [
+                    "compose"
+                ]
             }
         }
     },

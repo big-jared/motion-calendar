@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 
-package org.bigjared.motion.calendar
+package org.bigjared.motion.calendar.calendar
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
@@ -19,6 +19,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 
 @Composable
@@ -40,7 +41,7 @@ fun CalendarBody(
             state = dayPagerState,
             verticalAlignment = Alignment.Top
         ) { page ->
-            val date = calendarState.now.plus(startingDayPage - page, DateTimeUnit.DAY)
+            val date = calendarState.now.minus(startingDayPage - page, DateTimeUnit.DAY)
             dayContent(date)
         }
     }

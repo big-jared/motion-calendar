@@ -1,8 +1,8 @@
-@file:OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class,
-    ExperimentalMaterialApi::class
+@file:OptIn(
+    ExperimentalFoundationApi::class
 )
 
-package org.bigjared.motion.calendar
+package org.bigjared.motion.calendar.calendar
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -20,7 +20,6 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -34,22 +33,23 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock.System.now
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
+import org.bigjared.motion.calendar.util.monthDays
+import org.bigjared.motion.calendar.util.startOfMonth
+import org.bigjared.motion.calendar.util.startOfWeek
 
 @Composable
 fun DefaultHeader(modifier: Modifier = Modifier, calendarState: CalendarState) {
     val startDay = calendarState.shownMonth.value
 
-    Row(modifier = modifier.fillMaxWidth()
-        .zIndex(4f)
-        .padding(horizontal = 8.dp)
-        .padding(top = 8.dp)) {
+    Row(
+        modifier = modifier.fillMaxWidth().zIndex(4f).padding(horizontal = 8.dp).padding(top = 8.dp)
+    ) {
         Text(
             modifier = Modifier.align(Alignment.CenterVertically).padding(start = 8.dp),
             text = startDay.month.name.lowercase().capitalize(Locale.current),
@@ -71,73 +71,79 @@ fun DefaultHeader(modifier: Modifier = Modifier, calendarState: CalendarState) {
 fun CalendarHeader(
     modifier: Modifier = Modifier,
     calendarState: CalendarState,
+    colors: MotionCalendarColors,
     header: (@Composable () -> Unit)?,
+    weekDay: CalendarDayItem,
+    monthDay: CalendarDayItem,
+    dayDecoration: CalendarDayDecoration?,
     weekPagerState: PagerState,
     monthPagerState: PagerState,
     startingWeekPage: Int,
-    startingMonthPage: Int
+    startingMonthPage: Int,
 ) {
-    val background = MaterialTheme.colorScheme.surfaceContainerLowest
-    val intermediate = MaterialTheme.colorScheme.surfaceContainer
-    val primary = MaterialTheme.colorScheme.primaryContainer
+    val background = colors.backgroundGradientColorLow
+    val intermediate = colors.backgroundGradientColorMed
+    val primary = colors.backgroundGradientColorHigh
 
-    Column(
-        modifier = modifier.fillMaxWidth().background(
-            shape = RoundedCornerShape(
-                bottomStart = 16.dp,
-                bottomEnd = 16.dp
-            ), color = MaterialTheme.colorScheme.surface
-        ).drawBehind {
-            this.drawRoundRect(
-                Brush.linearGradient(
-                    0.0f to background,
-                    0.5f to intermediate,
-                    1.0f to primary,
-                    start = Offset(0.0f, 0.0f),
-                    end = Offset(0.0f, size.height),
-                ), cornerRadius = CornerRadius(64f)
-            )
-        }
-    ) {
+    Column(modifier = modifier.fillMaxWidth().background(
+        shape = RoundedCornerShape(
+            bottomStart = 16.dp, bottomEnd = 16.dp
+        ), color = colors.backgroundColor
+    ).drawBehind {
+        this.drawRoundRect(
+            Brush.linearGradient(
+                0.0f to background,
+                0.5f to intermediate,
+                1.0f to primary,
+                start = Offset(0.0f, 0.0f),
+                end = Offset(0.0f, size.height),
+            ), cornerRadius = CornerRadius(64f)
+        )
+    }) {
         header?.invoke()
         CollapsedWeekContent(
             calendarState = calendarState,
+            colors = colors,
             weekPagerState = weekPagerState,
-            startingWeekPage = startingWeekPage
+            startingWeekPage = startingWeekPage,
+            dayDecoration = dayDecoration,
+            weekDay = weekDay
         )
         ExpandedMonthContent(
             calendarState = calendarState,
+            colors = colors,
             monthPagerState = monthPagerState,
-            startingMonthPage = startingMonthPage
+            startingMonthPage = startingMonthPage,
+            dayDecoration = dayDecoration,
+            monthDay = monthDay,
         )
-        DragBar()
+        DragBar(colors)
     }
 }
 
 @Composable
-fun DragBar() {
+fun DragBar(colors: MotionCalendarColors) {
     Box(modifier = Modifier.fillMaxWidth()) {
         Box(
-            modifier = Modifier.padding(vertical = 12.dp)
-                .size(32.dp, 4.dp)
-                .background(
-                    MaterialTheme.colorScheme.onSurfaceVariant,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .align(Alignment.Center)
+            modifier = Modifier.padding(vertical = 12.dp).size(32.dp, 4.dp).background(
+                    color = colors.backgroundVariant, shape = RoundedCornerShape(8.dp)
+                ).align(Alignment.Center)
         )
     }
 }
+
 
 @Composable
 fun CollapsedWeekContent(
     modifier: Modifier = Modifier,
+    colors: MotionCalendarColors,
     weekPagerState: PagerState,
     calendarState: CalendarState,
+    dayDecoration: CalendarDayDecoration?,
+    weekDay: CalendarDayItem,
     startingWeekPage: Int
 ) {
     val now = now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-    val coScope = rememberCoroutineScope()
 
     Box {
         HorizontalPager(
@@ -146,22 +152,17 @@ fun CollapsedWeekContent(
             verticalAlignment = Alignment.Top
         ) { page ->
             calendarState.startOfWeek.value =
-                now.minus(startingWeekPage - page, DateTimeUnit.WEEK)
-                    .startOfWeek()
+                now.minus(startingWeekPage - page, DateTimeUnit.WEEK).startOfWeek()
             Row(Modifier.fillMaxWidth().padding(top = 8.dp)) {
                 var day = calendarState.startOfWeek.value
                 repeat((1..7).count()) {
-                    CalendarItem(
+                    weekDay.Content(
+                        modifier = modifier.weight(1f),
                         day = day,
-                        selected = day == calendarState.selectedDate.value,
-                        isToday = day == now,
-                        showWeekday = true,
-                        swipingState = calendarState.swipeState,
-                    ) {
-                        coScope.launch {
-                            calendarState.selectedDate.value = it
-                        }
-                    }
+                        state = calendarState,
+                        colors = colors,
+                        dayDecoration = dayDecoration
+                    )
                     day = day.plus(1, DateTimeUnit.DAY)
                 }
             }
@@ -172,15 +173,15 @@ fun CollapsedWeekContent(
 @Composable
 fun ExpandedMonthContent(
     modifier: Modifier = Modifier,
+    colors: MotionCalendarColors,
     calendarState: CalendarState,
+    monthDay: CalendarDayItem,
     monthPagerState: PagerState,
-    startingMonthPage: Int
+    startingMonthPage: Int,
+    dayDecoration: CalendarDayDecoration?,
 ) {
-    val coScope = rememberCoroutineScope()
     Box(
-        modifier
-            .padding(vertical = 8.dp)
-            .heightIn(max = 256.dp * calendarState.swipePercentage)
+        modifier.heightIn(max = 300.dp * calendarState.swipePercentage).padding(vertical = 8.dp)
             .alpha(calendarState.swipePercentage)
     ) {
         HorizontalPager(
@@ -189,25 +190,19 @@ fun ExpandedMonthContent(
             verticalAlignment = Alignment.Top
         ) { page ->
             calendarState.startOfMonth.value =
-                calendarState.now.minus(startingMonthPage - page, DateTimeUnit.MONTH)
-                    .startOfMonth()
+                calendarState.now.minus(startingMonthPage - page, DateTimeUnit.MONTH).startOfMonth()
             Column {
                 val days = calendarState.startOfMonth.value.monthDays()
                 days.chunked(7).forEach { week ->
-                    Row(Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                         week.forEach { day ->
-                            CalendarItem(
+                            monthDay.Content(
+                                modifier = modifier.weight(1f),
                                 day = day,
-                                selected = day == calendarState.selectedDate.value,
-                                isToday = day == calendarState.now,
-                                swipingState = null,
-                                showWeekday = false
-                            ) { date ->
-                                coScope.launch {
-                                    calendarState.selectedDate.value = date
-                                    calendarState.swipeState.animateTo(SwipingStates.Collapsed)
-                                }
-                            }
+                                colors = colors,
+                                state = calendarState,
+                                dayDecoration = dayDecoration
+                            )
                         }
                     }
                 }
