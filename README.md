@@ -10,7 +10,9 @@ Features:
 - iOS, Android, Desktop and Wasm support
   - The touch interactions are designed for Android and iOS, with desktop / web implementations being experimental
 
-https://github.com/user-attachments/assets/38c2592f-fd9d-47ed-82dc-3a2a149756da
+
+https://github.com/user-attachments/assets/1f371178-d093-4644-85d3-bbad101712f6
+
 
 Gradle Import:
 
