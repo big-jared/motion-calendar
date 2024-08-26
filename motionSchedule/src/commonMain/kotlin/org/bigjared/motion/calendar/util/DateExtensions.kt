@@ -40,20 +40,18 @@ internal fun LocalDate.monthDays(): List<LocalDate> {
     return dates
 }
 
-internal fun LocalTime.toHourMinuteString(showMinutes: Boolean = true): String {
+internal fun LocalTime.toHourMinuteString(showMinutes: Boolean = this.minute != 0, showAmPm: Boolean = true): String {
     val isAm = this.hour < 12
-    val minuteText =
-        if (this.minute > 10) this.minute else "0${this.minute}"
-    val hourText =
-        if (this.hour == 0) 12 else if (this.hour < 13) this.hour else this.hour - 12
-    return "$hourText${if(showMinutes)":$minuteText" else ""} ${if (isAm) "am" else "pm"}"
+    val minuteText = if (this.minute >= 10) this.minute else "0${this.minute}"
+    val hourText = if (this.hour == 0) 12 else if (this.hour < 13) this.hour else this.hour - 12
+    return "$hourText${if (showMinutes) ":$minuteText" else ""}${if (showAmPm) if (isAm) " am" else " pm" else ""}"
 }
 
 internal fun LocalDate.toEpochMs(): Long = (this.toEpochDays()) * 24L * 60 * 60 * 1000
 internal fun Long.toLocalDate(): LocalDate = Instant.fromEpochMilliseconds(this).toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 
-internal fun LocalTime.plus(duration: Duration): LocalTime {
+internal operator fun LocalTime.plus(duration: Duration): LocalTime {
     val rollOver = this.minute + (duration.inWholeMinutes % 60) > 60
     return LocalTime(
         hour = min(23, this.hour + duration.inWholeHours.toInt() + if (rollOver) 1 else 0),

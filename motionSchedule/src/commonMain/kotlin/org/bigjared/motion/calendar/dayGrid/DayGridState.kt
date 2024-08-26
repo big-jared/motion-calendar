@@ -11,6 +11,7 @@ import kotlinx.datetime.LocalDate
 data class DayGridState<T: TimedEvent>(
     val day: LocalDate,
     val events: Set<T>,
+    val gridRange: GridRange,
 ) {
     val sortedEvents = mutableStateOf<List<List<T>>>(emptyList())
     val firstEvent by lazy { events.minOf { it.start } }
@@ -38,7 +39,8 @@ data class DayGridState<T: TimedEvent>(
     companion object {
         fun <T: TimedEvent> Saver(
             day: LocalDate,
-            events: Set<T>
+            events: Set<T>,
+            gridRange: GridRange
         ): Saver<DayGridState<T>, Any> = listSaver(
             save = {
                 listOf(
@@ -48,7 +50,8 @@ data class DayGridState<T: TimedEvent>(
             restore = { value ->
                 DayGridState(
                     day = LocalDate.fromEpochDays(value[0]),
-                    events = events
+                    events = events,
+                    gridRange,
                 )
             }
         )
@@ -59,13 +62,15 @@ data class DayGridState<T: TimedEvent>(
 fun <T: TimedEvent> rememberDayGridState(
     day: LocalDate,
     events: Set<T>,
+    gridRange: GridRange = defaultGridRange,
 ): DayGridState<T> {
     return rememberSaveable(
-        saver = DayGridState.Saver(day, events)
+        saver = DayGridState.Saver(day, events, gridRange)
     ) {
         DayGridState(
             day = day,
-            events = events
+            events = events,
+            gridRange = gridRange
         )
     }
 }

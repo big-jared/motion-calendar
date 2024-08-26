@@ -25,7 +25,7 @@ fun SwipeableColumn(
     modifier: Modifier = Modifier,
     swipeableState: SwipeableState<SwipingStates>,
     headerContent: @Composable () -> Unit,
-    bodyContent: @Composable () -> Unit
+    bodyContent: @Composable () -> Unit,
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val heightInPx = with(LocalDensity.current) { maxHeight.toPx() }
