@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import kotlinx.datetime.Clock.System.now
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -67,11 +68,12 @@ data class MotionCalendarColors(
  *
  * @param calendarState - reference into the internals of the calendar, enables access to things like scroll state,
  * selected date, selected month and more.
+ * @param colors - overridable colors used by the calendar
+ * @param shape - override the shape of the calendar header
  * @param header - optional composable for the header of the calendar, [DefaultHeader] will provide a month year string,
  * but this can be overridden to whatever the caller prefers
  * @param weekDay - an implementor of [CalendarDayItem] to provide the collapsed UI row element to the calendar
  * @param monthDay - an implementor of [CalendarDayItem] to provide the expanded UI row element to the calendar
- * @param colors - overridable colors used by the calendar
  * @param dayDecoration - Decorator for week / month day UI to provide event indicators.
  * @param content - Configure the Item that is the contents of the calendar,
  * this should respond to selected day to show relevant information
@@ -84,10 +86,12 @@ data class MotionCalendarColors(
 fun MotionCalender(
     modifier: Modifier = Modifier,
     calendarState: CalendarState = rememberMotionCalendarState(selectedDateMs = now().toEpochMilliseconds()),
-    header: (@Composable () -> Unit)? = { DefaultHeader(calendarState = calendarState) },
+    colors: MotionCalendarColors = motionCalendarColors(),
+    shape: Shape = defaultShape,
+    header: (@Composable () -> Unit)? = { DefaultHeader(calendarState = calendarState, colors = colors) },
+    footer: (@Composable () -> Unit)? = { DefaultFooter(colors = colors) },
     weekDay: CalendarDayItem = CalendarDayOfWeek(),
     monthDay: CalendarDayItem = CalendarDayOfMonth(),
-    colors: MotionCalendarColors = motionCalendarColors(),
     dayDecoration: CalendarDayDecoration? = null,
     content: @Composable (LocalDate) -> Unit,
 ) {
@@ -150,6 +154,7 @@ fun MotionCalender(
             CalendarHeader(
                 calendarState = calendarState,
                 header = header,
+                footer = footer,
                 weekDay = weekDay,
                 monthDay = monthDay,
                 dayDecoration = dayDecoration,
@@ -157,7 +162,8 @@ fun MotionCalender(
                 weekPagerState = weekPagerState,
                 startingWeekPage = startingWeekPage,
                 startingMonthPage = startingMonthPage,
-                colors = colors
+                colors = colors,
+                shape = shape
             )
         },
         bodyContent = {

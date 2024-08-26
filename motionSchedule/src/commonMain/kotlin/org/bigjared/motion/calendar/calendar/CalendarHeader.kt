@@ -17,16 +17,21 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
@@ -44,7 +49,9 @@ import org.bigjared.motion.calendar.util.startOfMonth
 import org.bigjared.motion.calendar.util.startOfWeek
 
 @Composable
-fun DefaultHeader(modifier: Modifier = Modifier, calendarState: CalendarState) {
+internal fun DefaultHeader(
+    modifier: Modifier = Modifier, calendarState: CalendarState, colors: MotionCalendarColors
+) {
     val startDay = calendarState.shownMonth.value
 
     Row(
@@ -55,16 +62,27 @@ fun DefaultHeader(modifier: Modifier = Modifier, calendarState: CalendarState) {
             text = startDay.month.name.lowercase().capitalize(Locale.current),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
+            color = colors.onBackgroundColor
         )
         Text(
             modifier = Modifier.align(Alignment.CenterVertically).padding(start = 8.dp),
             text = "${startDay.year}",
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.headlineSmall
+            style = MaterialTheme.typography.headlineSmall,
+            color = colors.onBackgroundColor
         )
     }
 }
+
+@Composable
+internal fun DefaultFooter(modifier: Modifier = Modifier, colors: MotionCalendarColors) {
+    Box(modifier = modifier) {
+        DragBar(colors)
+    }
+}
+
+internal val defaultShape = RoundedCornerShape(bottomEnd = 16.dp, bottomStart = 16.dp)
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
@@ -72,7 +90,9 @@ fun CalendarHeader(
     modifier: Modifier = Modifier,
     calendarState: CalendarState,
     colors: MotionCalendarColors,
+    shape: Shape,
     header: (@Composable () -> Unit)?,
+    footer: (@Composable () -> Unit)?,
     weekDay: CalendarDayItem,
     monthDay: CalendarDayItem,
     dayDecoration: CalendarDayDecoration?,
@@ -86,18 +106,16 @@ fun CalendarHeader(
     val primary = colors.backgroundGradientColorHigh
 
     Column(modifier = modifier.fillMaxWidth().background(
-        shape = RoundedCornerShape(
-            bottomStart = 16.dp, bottomEnd = 16.dp
-        ), color = colors.backgroundColor
-    ).drawBehind {
-        this.drawRoundRect(
+        color = colors.backgroundColor
+    ).clip(RoundedCornerShape(16.dp)).drawBehind {
+        this.drawRect(
             Brush.linearGradient(
                 0.0f to background,
                 0.5f to intermediate,
                 1.0f to primary,
                 start = Offset(0.0f, 0.0f),
                 end = Offset(0.0f, size.height),
-            ), cornerRadius = CornerRadius(64f)
+            )
         )
     }) {
         header?.invoke()
@@ -117,7 +135,7 @@ fun CalendarHeader(
             dayDecoration = dayDecoration,
             monthDay = monthDay,
         )
-        DragBar(colors)
+        footer?.invoke()
     }
 }
 
@@ -126,8 +144,8 @@ fun DragBar(colors: MotionCalendarColors) {
     Box(modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier.padding(vertical = 12.dp).size(32.dp, 4.dp).background(
-                    color = colors.backgroundVariant, shape = RoundedCornerShape(8.dp)
-                ).align(Alignment.Center)
+                color = colors.backgroundVariant, shape = RoundedCornerShape(8.dp)
+            ).align(Alignment.Center)
         )
     }
 }

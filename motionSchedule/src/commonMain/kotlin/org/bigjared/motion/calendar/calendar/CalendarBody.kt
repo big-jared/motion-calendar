@@ -37,7 +37,7 @@ fun CalendarBody(
             .nestedScroll(TopAppBarDefaults.enterAlwaysScrollBehavior().nestedScrollConnection)
     ) {
         HorizontalPager(
-            modifier = modifier.padding(top = 8.dp).fillMaxWidth(),
+            modifier = modifier.fillMaxWidth(),
             state = dayPagerState,
             verticalAlignment = Alignment.Top
         ) { page ->
