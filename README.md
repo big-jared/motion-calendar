@@ -10,9 +10,7 @@ Features:
 - iOS, Android, Desktop and Wasm support
   - The touch interactions are designed for Android and iOS, with desktop / web implementations being experimental
 
-
-https://github.com/user-attachments/assets/1f371178-d093-4644-85d3-bbad101712f6
-
+https://github.com/user-attachments/assets/426e5058-470c-4079-b87f-0baab161d2d8
 
 Gradle Import:
 
@@ -70,16 +68,16 @@ MotionCalender(
         swipeState = swipeState,
     ),
     content = { day ->
-        DayGrid(
-            modifier = Modifier.fillMaxWidth().height(1000.dp),
-            state = rememberDayGridState(
-                day = day,
-                events = events[day] ?: emptySet(),
-            ),
-            eventUi = { rect, sampleTimedEvent ->
-                eventUi(rect, sampleTimedEvent, measurer)
-            }
-        )
+        DayGrid(modifier = Modifier.fillMaxWidth(), state = rememberDayGridState(
+            day = day,
+            events = events[day] ?: emptySet(),
+            gridRange = GridRange(
+                start = LocalTime(hour = 8, minute = 0),
+                duration = 12.hours
+            )
+        ), eventUi = { sampleTimedEvent ->
+            DayEvent(event = sampleTimedEvent)
+        })
     }
 )
 ```
