@@ -49,8 +49,7 @@ fun SwipeableColumn(
                     available: Offset,
                     source: NestedScrollSource
                 ): Offset {
-                    val delta = available.y
-                    return swipeableState.performDrag(delta).toOffset()
+                    return swipeableState.performDrag(available.y).toOffset()
                 }
 
                 override suspend fun onPostFling(

@@ -64,5 +64,5 @@ class TimedEventTests {
 class SampleTimedEvent(
     override val start: LocalTime,
     override val duration: Duration,
-    override val color: Color
+    val color: Color
 ) : TimedEvent

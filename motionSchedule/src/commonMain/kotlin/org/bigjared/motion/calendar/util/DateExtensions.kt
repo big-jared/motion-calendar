@@ -32,7 +32,7 @@ internal fun LocalDate.startOfMonth(): LocalDate {
 internal fun LocalDate.monthDays(): List<LocalDate> {
     var current = this.startOfMonth().startOfWeek()
     val dates = mutableListOf<LocalDate>()
-    while (current.month <= this.month || dates.size % 7 != 6) {
+    while ((current.month <= this.month && current.year <= this.year) || dates.size % 7 != 6) {
         dates.add(current)
         current = current.plus(1, DateTimeUnit.DAY)
     }

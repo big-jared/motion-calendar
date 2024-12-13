@@ -28,7 +28,7 @@ private fun CalendarPreview() {
             DayGrid(
                 state = rememberDayGridState(day = it, events = simpleTestEvents)
             ) {
-                DayEvent(event = it)
+                DayEvent(event = it) {}
             }
         }
     }
@@ -45,7 +45,7 @@ private fun CalendarPreviewDark() {
             DayGrid(
                 state = rememberDayGridState(day = it, events = testEvents)
             ) {
-                DayEvent(event = it)
+                DayEvent(event = it) {}
             }
         }
     }
@@ -64,7 +64,7 @@ private fun CalendarExpandedPreview() {
             DayGrid(
                 state = rememberDayGridState(day = it, events = testEvents)
             ) {
-                DayEvent(event = it)
+                DayEvent(event = it) {}
             }
         }
     }
@@ -83,7 +83,7 @@ private fun CalendarExpandedDarkPreview() {
             DayGrid(
                 state = rememberDayGridState(day = it, events = testEvents)
             ) {
-                DayEvent(event = it)
+                DayEvent(event = it) {}
             }
         }
     }
