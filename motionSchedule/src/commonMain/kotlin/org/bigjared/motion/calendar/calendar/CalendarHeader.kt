@@ -106,7 +106,7 @@ fun CalendarHeader(
     val primary = colors.backgroundGradientColorHigh
 
     Column(modifier = modifier.fillMaxWidth().background(
-        color = colors.backgroundColor
+        color = background
     ).clip(RoundedCornerShape(16.dp)).drawBehind {
         this.drawRect(
             Brush.linearGradient(

@@ -13,7 +13,7 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.28.0"
 }
 
-val version = "0.0.12"
+val version = "0.0.13"
 
 mavenPublishing {
     // Define coordinates for the published artifact
