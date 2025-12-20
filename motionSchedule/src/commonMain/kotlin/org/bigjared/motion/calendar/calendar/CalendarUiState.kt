@@ -1,5 +1,6 @@
 package org.bigjared.motion.calendar.calendar
 
+import androidx.compose.animation.core.spring
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.SwipeableState
 import androidx.compose.material.rememberSwipeableState
@@ -7,12 +8,10 @@ import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SelectableDates
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import kotlinx.datetime.Clock.System.now
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -40,7 +39,13 @@ fun rememberMotionCalendarState(
     selectedDateMs: Long,
     selectableDates: SelectableDates = DatePickerDefaults.AllDates,
     highlightToday: Boolean = true,
-    swipeState: SwipeableState<SwipingStates> = rememberSwipeableState(initialValue = SwipingStates.Collapsed),
+    swipeState: SwipeableState<SwipingStates> = rememberSwipeableState(
+        initialValue = SwipingStates.Collapsed,
+        animationSpec = spring(
+            dampingRatio = 0.8f,
+            stiffness = 400f
+        )
+    ),
 ): CalendarState {
     return rememberSaveable(
         saver = CalendarState.Saver(swipeState, selectableDates)
@@ -65,6 +70,7 @@ data class CalendarState(
     var shownMonth = mutableStateOf(selectedDateMs.toLocalDate())
     var startOfWeek = mutableStateOf(selectedDateMs.toLocalDate().startOfWeek())
     var startOfMonth = mutableStateOf(selectedDateMs.toLocalDate().startOfMonth())
+    var viewMode = mutableStateOf(CalendarViewMode.Day)
 
     val now = now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 

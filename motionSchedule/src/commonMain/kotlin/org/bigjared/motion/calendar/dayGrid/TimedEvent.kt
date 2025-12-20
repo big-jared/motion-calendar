@@ -12,8 +12,14 @@ interface TimedEvent {
     fun before(event: TimedEvent) = this.start < event.start
 
     fun overlaps(event: TimedEvent): Boolean {
-        return if (this.before(event)) {
-            this.end > event.start
-        } else event.end > this.start
+        val thisEnd = start.plus(duration)
+        val otherEnd = event.start.plus(event.duration)
+        return !(thisEnd <= event.start || start >= otherEnd)
     }
+}
+
+interface InstantTimedEvent {
+    val time: LocalTime
+    val color: Int
+    val text: String
 }

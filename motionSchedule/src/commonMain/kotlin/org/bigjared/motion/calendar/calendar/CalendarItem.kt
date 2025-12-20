@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
@@ -52,11 +53,12 @@ interface CalendarDayItem {
         day: LocalDate,
         colors: MotionCalendarColors,
         state: CalendarState,
-        dayDecoration: CalendarDayDecoration?
+        dayDecoration: CalendarDayDecoration?,
+        hasEvents: Boolean
     )
 }
 
-internal class CalendarDayOfWeek : CalendarDayItem {
+class CalendarDayOfWeek : CalendarDayItem {
 
     @OptIn(ExperimentalMaterialApi::class)
     @Composable
@@ -65,7 +67,8 @@ internal class CalendarDayOfWeek : CalendarDayItem {
         day: LocalDate,
         colors: MotionCalendarColors,
         state: CalendarState,
-        dayDecoration: CalendarDayDecoration?
+        dayDecoration: CalendarDayDecoration?,
+        hasEvents: Boolean
     ) {
         val coScope = rememberCoroutineScope()
         val inActiveMonth = day.monthNumber == state.shownMonth.value.monthNumber
@@ -133,7 +136,7 @@ internal class CalendarDayOfWeek : CalendarDayItem {
     }
 }
 
-internal class CalendarDayOfMonth : CalendarDayItem {
+class CalendarDayOfMonth : CalendarDayItem {
 
     @OptIn(ExperimentalMaterialApi::class)
     @Composable
@@ -142,7 +145,8 @@ internal class CalendarDayOfMonth : CalendarDayItem {
         day: LocalDate,
         colors: MotionCalendarColors,
         state: CalendarState,
-        dayDecoration: CalendarDayDecoration?
+        dayDecoration: CalendarDayDecoration?,
+        hasEvents: Boolean
     ) {
         val coScope = rememberCoroutineScope()
         val inActiveMonth = day.monthNumber == state.shownMonth.value.monthNumber
@@ -168,8 +172,7 @@ internal class CalendarDayOfMonth : CalendarDayItem {
 
             Box(
                 modifier = baseModifier
-                    .fillMaxWidth(.68f)
-                    .aspectRatio(1f)
+                    .size(42.dp)
                     .align(Alignment.Center)
                     .clip(CircleShape)
                     .clickable {

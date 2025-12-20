@@ -1,5 +1,6 @@
 package org.bigjared.motion.calendar
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -7,10 +8,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
@@ -32,13 +35,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.Clock.System.now
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 import org.bigjared.motion.calendar.ScheduleService.getTestEvents
 import org.bigjared.motion.calendar.calendar.CalendarDayDecoration
 import org.bigjared.motion.calendar.calendar.CalendarDecorationAlignment
+import org.bigjared.motion.calendar.calendar.CalendarViewMode
 import org.bigjared.motion.calendar.calendar.MotionCalender
 import org.bigjared.motion.calendar.calendar.SwipingStates
 import org.bigjared.motion.calendar.calendar.rememberMotionCalendarState
+import org.bigjared.motion.calendar.common.DashedVerticalDivider
 import org.bigjared.motion.calendar.dayGrid.DayGrid
 import org.bigjared.motion.calendar.dayGrid.GridRange
 import org.bigjared.motion.calendar.dayGrid.rememberDayGridState
@@ -60,11 +70,26 @@ fun EventIndicator(modifier: Modifier = Modifier) {
 @Composable
 @Preview
 fun App() {
-
     MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
         val swipeState = rememberSwipeableState(initialValue = SwipingStates.Collapsed)
         var eventDialogState by remember { mutableStateOf<SampleTimedEvent?>(null) }
         val events = getTestEvents()
+
+        // Shared scroll state for week view synchronization
+        val sharedScrollState = rememberScrollState()
+
+        // Current time for initial scroll position
+        val currentTime = remember {
+            now().toLocalDateTime(TimeZone.currentSystemDefault()).time
+        }
+
+        // 24-hour grid range
+        val gridRange = remember {
+            GridRange(
+                start = LocalTime(hour = 0, minute = 0),
+                duration = 24.hours
+            )
+        }
 
         eventDialogState?.let { event ->
             EventDialog(event = event, onDismiss = {
@@ -74,30 +99,90 @@ fun App() {
 
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             Column(modifier = Modifier.fillMaxSize()) {
-                MotionCalender(
-                    modifier = Modifier.weight(1f),
-                    calendarState = rememberMotionCalendarState(
+                val calendarState = rememberMotionCalendarState(
                     selectedDateMs = now().toEpochMilliseconds(),
                     swipeState = swipeState,
-                ),
+                )
+
+                MotionCalender(
+                    modifier = Modifier.weight(1f),
+                    calendarState = calendarState,
                     dayDecoration = CalendarDayDecoration(
                         alignment = CalendarDecorationAlignment.Below,
                         content = { day ->
                             if (events.containsKey(day)) {
                                 EventIndicator()
                             }
-                        }),
-                    content = { day ->
-                        DayGrid(modifier = Modifier.fillMaxWidth(), state = rememberDayGridState(
-                            day = day, events = events[day] ?: emptySet(), gridRange = GridRange(
-                                start = LocalTime(hour = 8, minute = 0), duration = 12.hours
-                            )
-                        ), eventUi = { sampleTimedEvent ->
-                            DayEvent(event = sampleTimedEvent, selectEvent = { event ->
+                        }
+                    ),
+                    getEventsForDate = { day -> events[day]?.toList() ?: emptyList() },
+                    dayContent = { day ->
+                        DayGrid(
+                            modifier = Modifier.fillMaxWidth(),
+                            state = rememberDayGridState(
+                                day = day,
+                                events = events[day] ?: emptySet(),
+                                gridRange = gridRange
+                            ),
+                            initialScrollTime = currentTime,
+                            eventUi = { sampleTimedEvent ->
+                                DayEvent(event = sampleTimedEvent, selectEvent = { event ->
+                                    eventDialogState = event
+                                })
+                            }
+                        )
+                    },
+                    weekContent = { weekStart ->
+                        WeekView(
+                            weekStart = weekStart,
+                            events = events,
+                            gridRange = gridRange,
+                            sharedScrollState = sharedScrollState,
+                            initialScrollTime = currentTime,
+                            onEventSelected = { event ->
                                 eventDialogState = event
-                            })
+                            }
+                        )
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun WeekView(
+    weekStart: LocalDate,
+    events: Map<LocalDate, Set<SampleTimedEvent>>,
+    gridRange: GridRange,
+    sharedScrollState: ScrollState,
+    initialScrollTime: LocalTime,
+    onEventSelected: (SampleTimedEvent) -> Unit
+) {
+    Row(modifier = Modifier.fillMaxSize()) {
+        repeat(7) { dayOffset ->
+            val day = weekStart.plus(dayOffset, DateTimeUnit.DAY)
+            val isFirstDay = dayOffset == 0
+
+            Box(modifier = Modifier.weight(1f)) {
+                DayGrid(
+                    modifier = Modifier.fillMaxSize(),
+                    state = rememberDayGridState(
+                        day = day,
+                        events = events[day] ?: emptySet(),
+                        gridRange = gridRange
+                    ),
+                    sharedScrollState = sharedScrollState,
+                    initialScrollTime = initialScrollTime,
+                    showTimeLabels = isFirstDay,
+                    eventLabelPaddingOverride = isFirstDay,
+                    showLeadingVerticalDivider = !isFirstDay,
+                    eventUi = { sampleTimedEvent ->
+                        DayEvent(event = sampleTimedEvent, selectEvent = { event ->
+                            onEventSelected(event)
                         })
-                    })
+                    }
+                )
             }
         }
     }

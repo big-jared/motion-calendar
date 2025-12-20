@@ -1,15 +1,23 @@
 package org.bigjared.motion.calendar.calendar
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock.System.now
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -19,8 +27,11 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.monthsUntil
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
+import org.bigjared.motion.calendar.common.Platform
+import org.bigjared.motion.calendar.common.LocalPlatform
 import org.bigjared.motion.calendar.util.startOfMonth
 import org.bigjared.motion.calendar.util.startOfWeek
+import kotlin.math.abs
 
 @Composable
 fun motionCalendarColors(
@@ -29,7 +40,7 @@ fun motionCalendarColors(
     primaryContainer: Color = MaterialTheme.colorScheme.primaryContainer,
     border: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     onBackgroundColor: Color = MaterialTheme.colorScheme.onBackground,
-    backgroundColor: Color = MaterialTheme.colorScheme.surface,
+    backgroundColor: Color = MaterialTheme.colorScheme.background,
     backgroundVariant: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     backgroundGradientColorLow: Color = MaterialTheme.colorScheme.surfaceContainerLowest,
     backgroundGradientColorMed: Color = MaterialTheme.colorScheme.surfaceContainer,
@@ -63,20 +74,64 @@ data class MotionCalendarColors(
     val divider: Color,
 )
 
+enum class CalendarViewMode { Day, Week, Month }
+
+/**
+ * Navigation controls for the calendar pager
+ */
+@OptIn(ExperimentalFoundationApi::class)
+data class CalendarNavigationControls(
+    val onNext: () -> Unit,
+    val onPrevious: () -> Unit,
+    val onNextMonth: () -> Unit,
+    val onPreviousMonth: () -> Unit
+)
+
+/**
+ * Modifier to disable horizontal scrolling on desktop platforms while allowing vertical scrolling
+ */
+@OptIn(ExperimentalFoundationApi::class)
+private fun Modifier.disableDesktopScrolling(platform: Platform): Modifier {
+    return if (platform == Platform.Desktop) {
+        this.pointerInput(Unit) {
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    // Only consume horizontal scroll events to allow vertical scrolling
+                    event.changes.forEach { change ->
+                        val scrollDelta = change.scrollDelta
+                        // Only consume if it's primarily a horizontal scroll
+                        if (abs(scrollDelta.x) > abs(scrollDelta.y)) {
+                            change.consume()
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        this
+    }
+}
+
 /**
  * A configurable and expandable calendar component.
  *
  * @param calendarState - reference into the internals of the calendar, enables access to things like scroll state,
  * selected date, selected month and more.
+ * @param viewMode - the current view mode (Day, Week, or Month)
  * @param colors - overridable colors used by the calendar
  * @param shape - override the shape of the calendar header
  * @param header - optional composable for the header of the calendar, [DefaultHeader] will provide a month year string,
  * but this can be overridden to whatever the caller prefers
+ * @param footer - optional composable for the footer of the calendar
  * @param weekDay - an implementor of [CalendarDayItem] to provide the collapsed UI row element to the calendar
  * @param monthDay - an implementor of [CalendarDayItem] to provide the expanded UI row element to the calendar
  * @param dayDecoration - Decorator for week / month day UI to provide event indicators.
- * @param content - Configure the Item that is the contents of the calendar,
- * this should respond to selected day to show relevant information
+ * @param dayContent - Configure the content for day view mode
+ * @param weekContent - Configure the content for week view mode
+ * @param monthContent - Configure the content for month view mode
+ * @param getEventsForDate - function to get events for a specific date (used for indicators)
+ * @param onNavigationControlsReady - callback when navigation controls are available (useful for desktop)
  */
 @OptIn(
     ExperimentalFoundationApi::class, ExperimentalMaterialApi::class,
@@ -89,16 +144,20 @@ fun MotionCalender(
     colors: MotionCalendarColors = motionCalendarColors(),
     shape: Shape = defaultShape,
     header: (@Composable () -> Unit)? = { DefaultHeader(calendarState = calendarState, colors = colors) },
-    footer: (@Composable () -> Unit)? = { DefaultFooter(colors = colors) },
+    footer: (@Composable () -> Unit)? = null,
     weekDay: CalendarDayItem = CalendarDayOfWeek(),
     monthDay: CalendarDayItem = CalendarDayOfMonth(),
     dayDecoration: CalendarDayDecoration? = null,
-    content: @Composable (LocalDate) -> Unit,
+    dayContent: @Composable (LocalDate) -> Unit = {},
+    weekContent: @Composable (LocalDate) -> Unit = {},
+    monthContent: @Composable (LocalDate) -> Unit = {},
+    getEventsForDate: (LocalDate) -> List<Any> = { emptyList() },
+    onNavigationControlsReady: (CalendarNavigationControls) -> Unit = {},
 ) {
+    val platform = LocalPlatform.current
     val now = now().toLocalDateTime(TimeZone.currentSystemDefault()).date
     val selectedDate = calendarState.selectedDate.value
-
-    // All this paging logic should be moved to CalendarState, but for right now, it's working
+    val scope = rememberCoroutineScope()
 
     val startingWeekPage = 1000
     val startingDayPage = 4000
@@ -113,6 +172,27 @@ fun MotionCalender(
     val dayPagerState = rememberPagerState(initialPage = startingDayPage,
         initialPageOffsetFraction = 0f,
         pageCount = { startingDayPage * 2 })
+
+    // Toggle function for expanding/collapsing calendar
+    val onToggleExpand: () -> Unit = {
+        scope.launch {
+            val targetState = if (calendarState.swipePercentage > 0.5f) {
+                SwipingStates.Collapsed
+            } else {
+                SwipingStates.Expanded
+            }
+            calendarState.swipeState.animateTo(targetState)
+        }
+    }
+
+    // Create footer with toggle functionality
+    val footerComposable: (@Composable () -> Unit)? = footer ?: {
+        DefaultFooter(
+            colors = colors,
+            calendarState = calendarState,
+            onToggleExpand = onToggleExpand
+        )
+    }
 
     LaunchedEffect(calendarState.selectedDate.value) {
         val weekAnchorDate = if (selectedDate < now.startOfWeek()) selectedDate.minus(
@@ -147,14 +227,68 @@ fun MotionCalender(
                 .startOfMonth()
     }
 
+    val viewMode = calendarState.viewMode.value
+
+    LaunchedEffect(viewMode, weekPagerState.currentPage) {
+        if (viewMode == CalendarViewMode.Week) {
+            calendarState.startOfWeek.value =
+                now.plus(weekPagerState.currentPage - startingWeekPage, DateTimeUnit.WEEK).startOfWeek()
+        }
+    }
+
+    // Navigation controls for desktop/web
+    val navigationControls = remember(viewMode, scope) {
+        CalendarNavigationControls(
+            onNext = {
+                scope.launch {
+                    when (viewMode) {
+                        CalendarViewMode.Day -> dayPagerState.animateScrollToPage(dayPagerState.currentPage + 1)
+                        CalendarViewMode.Week -> weekPagerState.animateScrollToPage(weekPagerState.currentPage + 1)
+                        CalendarViewMode.Month -> monthPagerState.animateScrollToPage(monthPagerState.currentPage + 1)
+                    }
+                }
+            },
+            onPrevious = {
+                scope.launch {
+                    when (viewMode) {
+                        CalendarViewMode.Day -> dayPagerState.animateScrollToPage(dayPagerState.currentPage - 1)
+                        CalendarViewMode.Week -> weekPagerState.animateScrollToPage(weekPagerState.currentPage - 1)
+                        CalendarViewMode.Month -> monthPagerState.animateScrollToPage(monthPagerState.currentPage - 1)
+                    }
+                }
+            },
+            onNextMonth = {
+                scope.launch {
+                    monthPagerState.animateScrollToPage(monthPagerState.currentPage + 1)
+                }
+            },
+            onPreviousMonth = {
+                scope.launch {
+                    monthPagerState.animateScrollToPage(monthPagerState.currentPage - 1)
+                }
+            }
+        )
+    }
+
+    // Expose navigation controls to caller
+    LaunchedEffect(navigationControls) {
+        onNavigationControlsReady(navigationControls)
+    }
+
+    // Build header with navigation controls if using default
+    val headerWithNav: (@Composable () -> Unit)? = if (header == null) {
+        null
+    } else {
+        { DefaultHeader(calendarState = calendarState, colors = colors, navigationControls = navigationControls) }
+    }
+
     SwipeableColumn(
         modifier = modifier,
-        swipeableState = calendarState.swipeState,
         headerContent = {
             CalendarHeader(
                 calendarState = calendarState,
-                header = header,
-                footer = footer,
+                header = headerWithNav,
+                footer = footerComposable,
                 weekDay = weekDay,
                 monthDay = monthDay,
                 dayDecoration = dayDecoration,
@@ -163,16 +297,45 @@ fun MotionCalender(
                 startingWeekPage = startingWeekPage,
                 startingMonthPage = startingMonthPage,
                 colors = colors,
-                shape = shape
+                shape = shape,
+                getEventsForDate = getEventsForDate,
+                onToggleExpand = onToggleExpand
             )
         },
         bodyContent = {
-            CalendarBody(
-                calendarState = calendarState,
-                dayPagerState = dayPagerState,
-                startingDayPage = startingDayPage,
-                dayContent = content
-            )
+            when (viewMode) {
+                CalendarViewMode.Day -> {
+                    HorizontalPager(
+                        modifier = Modifier.fillMaxWidth().disableDesktopScrolling(platform),
+                        state = dayPagerState,
+                        userScrollEnabled = platform != Platform.Desktop
+                    ) { page ->
+                        val date = now.minus(startingDayPage - page, DateTimeUnit.DAY)
+                        dayContent(date)
+                    }
+                }
+                CalendarViewMode.Week -> {
+                    HorizontalPager(
+                        modifier = Modifier.fillMaxWidth().disableDesktopScrolling(platform),
+                        state = weekPagerState,
+                        userScrollEnabled = platform != Platform.Desktop
+                    ) { page ->
+                        val weekStart = now.minus(startingWeekPage - page, DateTimeUnit.WEEK).startOfWeek()
+                        weekContent(weekStart)
+                    }
+                }
+                CalendarViewMode.Month -> {
+                    HorizontalPager(
+                        modifier = Modifier.fillMaxWidth().disableDesktopScrolling(platform),
+                        state = monthPagerState,
+                        userScrollEnabled = platform != Platform.Desktop
+                    ) { page ->
+                        val monthStart = now.minus(startingMonthPage - page, DateTimeUnit.MONTH).startOfMonth()
+                        monthContent(monthStart)
+                    }
+                }
+            }
         },
+        swipeableState = calendarState.swipeState
     )
 }

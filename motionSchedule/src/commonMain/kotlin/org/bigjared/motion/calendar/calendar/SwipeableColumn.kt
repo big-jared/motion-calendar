@@ -18,6 +18,9 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Velocity
+import androidx.compose.ui.unit.dp
+import org.bigjared.motion.calendar.common.LocalPlatform
+import org.bigjared.motion.calendar.common.Platform
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -27,8 +30,11 @@ fun SwipeableColumn(
     headerContent: @Composable () -> Unit,
     bodyContent: @Composable () -> Unit,
 ) {
+    val platform = LocalPlatform.current
+    val isSwipeEnabled = platform == Platform.Android || platform == Platform.iOS
+
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val heightInPx = with(LocalDensity.current) { maxHeight.toPx() }
+        val heightInPx = with(LocalDensity.current) { maxHeight.toPx() - 1000f }
         val connection = remember {
             object : NestedScrollConnection {
 
@@ -36,6 +42,7 @@ fun SwipeableColumn(
                     available: Offset,
                     source: NestedScrollSource
                 ): Offset {
+                    if (!isSwipeEnabled) return Offset.Zero
                     val delta = available.y
                     return if (delta < 0) {
                         swipeableState.performDrag(delta).toOffset()
@@ -49,6 +56,7 @@ fun SwipeableColumn(
                     available: Offset,
                     source: NestedScrollSource
                 ): Offset {
+                    if (!isSwipeEnabled) return Offset.Zero
                     return swipeableState.performDrag(available.y).toOffset()
                 }
 
@@ -56,6 +64,7 @@ fun SwipeableColumn(
                     consumed: Velocity,
                     available: Velocity
                 ): Velocity {
+                    if (!isSwipeEnabled) return Velocity.Zero
                     swipeableState.performFling(velocity = available.y)
                     return super.onPostFling(consumed, available)
                 }
@@ -69,14 +78,17 @@ fun SwipeableColumn(
                 .fillMaxSize()
                 .swipeable(
                     state = swipeableState,
-                    thresholds = { _, _ -> FractionalThreshold(0.8f) },
+                    thresholds = { _, _ -> FractionalThreshold(0.3f) },
                     orientation = Orientation.Vertical,
+                    enabled = isSwipeEnabled,
                     anchors = mapOf(
                         0f to SwipingStates.Collapsed,
                         heightInPx to SwipingStates.Expanded,
-                    )
+                    ),
+                    velocityThreshold = 125.dp,
+                    resistance = null
                 )
-                .nestedScroll(connection)
+                .then(if (isSwipeEnabled) Modifier.nestedScroll(connection) else Modifier)
         ) {
             Column {
                 headerContent()

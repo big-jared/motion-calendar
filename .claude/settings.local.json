@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/jaredguttromson/src/homely/**)",
+      "Bash(./gradlew test)",
+      "Bash(./gradlew test --console=plain)",
+      "Bash(./gradlew :motionSchedule:testDebugUnitTest --console=plain)",
+      "Bash(./gradlew :motionSchedule:clean)",
+      "Bash(cat:*)",
+      "Bash(git checkout:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

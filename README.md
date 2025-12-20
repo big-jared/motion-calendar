@@ -1,87 +1,180 @@
-Compose multiplatform calendar and day grid components
+# Motion Calendar
 
-Targeting Android, iOS, Desktop and Wasm. 
+Compose Multiplatform calendar and day grid components.
 
-Features:
-- Overridable colors
-- Configurable day decoration
-- Day, Week, and Month paging
-- Customizable event indicators
-- iOS, Android, Desktop and Wasm support
-  - The touch interactions are designed for Android and iOS, with desktop / web implementations being experimental
+Targeting Android, iOS, Desktop and WASM.
+
+## Features
+
+- Day, Week, and Month view modes with built-in toggle
+- Expandable/collapsible month calendar
+- Customizable colors and theming
+- Configurable day decorations and event indicators
+- Platform-aware UI (swipe on mobile, buttons on desktop/web)
+- DayGrid component for timed event display
+- Week view with synchronized scrolling
 
 https://github.com/user-attachments/assets/426e5058-470c-4079-b87f-0baab161d2d8
 
-Gradle Import:
+## Installation
 
-```
-implementation("io.github.big-jared:motion-calendar:(latest release)")
+```kotlin
+implementation("io.github.big-jared:motion-calendar:1.0.0")
 ```
 
-Basic Usage:
+## Basic Usage
 
-```
+```kotlin
 MotionCalender(
     calendarState = rememberMotionCalendarState(
         selectedDateMs = now().toEpochMilliseconds()
     ),
-    content = { day ->
-        // Show your UI below calendar here
+    dayContent = { day ->
+        // Your day view content
+    },
+    weekContent = { weekStart ->
+        // Your week view content
     }
 )
 ```
 
-Use swipeState to control calendar expansion directly
+## Day/Week View Toggle
 
+The calendar includes a built-in Day/Week toggle in the header. You can read or modify the view mode via the calendar state:
+
+```kotlin
+val calendarState = rememberMotionCalendarState(
+    selectedDateMs = now().toEpochMilliseconds()
+)
+
+// Read current view mode
+val currentMode = calendarState.viewMode.value
+
+// Change view mode programmatically
+calendarState.viewMode.value = CalendarViewMode.Week
 ```
-val coScope = rememberCoroutineScope()
-val swipeState = rememberSwipeableState(SwipingStates.Expanded)
-MotionCalender(calendarState = rememberMotionCalendarState(
-    selectedDateMs = now().toEpochMilliseconds(),
-    swipeState = swipeState
-), content = { day ->
-    Box(Modifier.fillMaxSize()) {
-        Button(modifier = Modifier.align(Alignment.Center), onClick = {
-            coScope.launch {
-                swipeState.animateTo(
-                    when (swipeState.currentValue) {
-                        SwipingStates.Expanded -> SwipingStates.Collapsed
-                        SwipingStates.Collapsed -> SwipingStates.Expanded
-                    }
+
+## DayGrid Component
+
+Display timed events in a scrollable day grid:
+
+```kotlin
+MotionCalender(
+    calendarState = rememberMotionCalendarState(
+        selectedDateMs = now().toEpochMilliseconds()
+    ),
+    dayContent = { day ->
+        DayGrid(
+            modifier = Modifier.fillMaxWidth(),
+            state = rememberDayGridState(
+                day = day,
+                events = events[day] ?: emptySet(),
+                gridRange = GridRange(
+                    start = LocalTime(hour = 0, minute = 0),
+                    duration = 24.hours
+                )
+            ),
+            initialScrollTime = LocalTime(8, 0),
+            eventUi = { event ->
+                // Your event UI
+            }
+        )
+    }
+)
+```
+
+## Week View with Synchronized Scrolling
+
+```kotlin
+val sharedScrollState = rememberScrollState()
+
+MotionCalender(
+    calendarState = calendarState,
+    weekContent = { weekStart ->
+        Row(modifier = Modifier.fillMaxSize()) {
+            repeat(7) { dayOffset ->
+                val day = weekStart.plus(dayOffset, DateTimeUnit.DAY)
+                DayGrid(
+                    modifier = Modifier.weight(1f),
+                    state = rememberDayGridState(day = day, events = events[day] ?: emptySet()),
+                    sharedScrollState = sharedScrollState,
+                    showTimeLabels = dayOffset == 0,
+                    eventUi = { event -> /* Your event UI */ }
                 )
             }
-        }) {
-            Text("Toggle")
         }
     }
-})`
+)
 ```
 
-Implement the DayGrid component as the content of your calendar if desired.
+## Event Indicators
 
-**NOTE** DayGrid is experimental and will be changing quite a bit.
+Show indicators for days with events:
 
+```kotlin
+MotionCalender(
+    calendarState = calendarState,
+    dayDecoration = CalendarDayDecoration(
+        alignment = CalendarDecorationAlignment.Below,
+        content = { day ->
+            if (events.containsKey(day)) {
+                Box(
+                    modifier = Modifier
+                        .size(5.dp)
+                        .background(color = MaterialTheme.colorScheme.primary, shape = CircleShape)
+                )
+            }
+        }
+    ),
+    getEventsForDate = { day -> events[day]?.toList() ?: emptyList() },
+    dayContent = { day -> /* ... */ }
+)
 ```
+
+## Expand/Collapse Calendar
+
+On mobile, swipe to expand/collapse the month view. On desktop/web, use the arrow button. You can also control it programmatically:
+
+```kotlin
+val swipeState = rememberSwipeableState(SwipingStates.Collapsed)
+val scope = rememberCoroutineScope()
+
 MotionCalender(
     calendarState = rememberMotionCalendarState(
         selectedDateMs = now().toEpochMilliseconds(),
-        swipeState = swipeState,
+        swipeState = swipeState
     ),
-    content = { day ->
-        DayGrid(modifier = Modifier.fillMaxWidth(), state = rememberDayGridState(
-            day = day,
-            events = events[day] ?: emptySet(),
-            gridRange = GridRange(
-                start = LocalTime(hour = 8, minute = 0),
-                duration = 12.hours
-            )
-        ), eventUi = { sampleTimedEvent ->
-            DayEvent(event = sampleTimedEvent)
-        })
-    }
+    dayContent = { day -> /* ... */ }
 )
+
+// Toggle programmatically
+scope.launch {
+    swipeState.animateTo(
+        if (swipeState.currentValue == SwipingStates.Expanded)
+            SwipingStates.Collapsed
+        else
+            SwipingStates.Expanded
+    )
+}
 ```
 
-Check out the sample app for an example implementation!
+## Platform Support
 
-License: MIT
+| Platform | Swipe Gestures | Navigation Buttons | Horizontal Paging |
+|----------|---------------|-------------------|-------------------|
+| Android  | Yes           | No                | Swipe             |
+| iOS      | Yes           | No                | Swipe             |
+| Desktop  | No            | Yes               | Buttons           |
+| Web      | No            | Yes               | Buttons           |
+
+## Sample App
+
+Check out the sample app for a complete implementation example!
+
+## Production Usage
+
+This library powers the calendar in [Homeroom](https://thehomeroom.app).
+
+## License
+
+MIT

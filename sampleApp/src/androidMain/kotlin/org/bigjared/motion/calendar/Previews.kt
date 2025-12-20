@@ -1,14 +1,12 @@
 
 package org.bigjared.motion.calendar
 
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.rememberSwipeableState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.datetime.Clock.System.now
 import org.bigjared.motion.calendar.calendar.MotionCalender
@@ -23,14 +21,16 @@ import org.bigjared.motion.calendar.dayGrid.rememberDayGridState
 private fun CalendarPreview() {
     MaterialTheme {
         MotionCalender(
-            calendarState = rememberMotionCalendarState(selectedDateMs = now().toEpochMilliseconds())
-        ) {
-            DayGrid(
-                state = rememberDayGridState(day = it, events = simpleTestEvents)
-            ) {
-                DayEvent(event = it) {}
+            calendarState = rememberMotionCalendarState(selectedDateMs = now().toEpochMilliseconds()),
+            dayContent = { day ->
+                DayGrid(
+                    state = rememberDayGridState(day = day, events = simpleTestEvents),
+                    eventUi = { event ->
+                        DayEvent(event = event) {}
+                    }
+                )
             }
-        }
+        )
     }
 }
 
@@ -40,14 +40,16 @@ private fun CalendarPreview() {
 private fun CalendarPreviewDark() {
     MaterialTheme(colorScheme = darkColorScheme()) {
         MotionCalender(
-            calendarState = rememberMotionCalendarState(selectedDateMs = now().toEpochMilliseconds())
-        ) {
-            DayGrid(
-                state = rememberDayGridState(day = it, events = testEvents)
-            ) {
-                DayEvent(event = it) {}
+            calendarState = rememberMotionCalendarState(selectedDateMs = now().toEpochMilliseconds()),
+            dayContent = { day ->
+                DayGrid(
+                    state = rememberDayGridState(day = day, events = testEvents),
+                    eventUi = { event ->
+                        DayEvent(event = event) {}
+                    }
+                )
             }
-        }
+        )
     }
 }
 
@@ -59,14 +61,17 @@ private fun CalendarExpandedPreview() {
         MotionCalender(
             calendarState = rememberMotionCalendarState(
                 selectedDateMs = now().toEpochMilliseconds(),
-                swipeState = rememberSwipeableState(initialValue = SwipingStates.Expanded)),
-        ) {
-            DayGrid(
-                state = rememberDayGridState(day = it, events = testEvents)
-            ) {
-                DayEvent(event = it) {}
+                swipeState = rememberSwipeableState(initialValue = SwipingStates.Expanded)
+            ),
+            dayContent = { day ->
+                DayGrid(
+                    state = rememberDayGridState(day = day, events = testEvents),
+                    eventUi = { event ->
+                        DayEvent(event = event) {}
+                    }
+                )
             }
-        }
+        )
     }
 }
 
@@ -78,13 +83,16 @@ private fun CalendarExpandedDarkPreview() {
         MotionCalender(
             calendarState = rememberMotionCalendarState(
                 selectedDateMs = now().toEpochMilliseconds(),
-                swipeState = rememberSwipeableState(initialValue = SwipingStates.Expanded)),
-        ) {
-            DayGrid(
-                state = rememberDayGridState(day = it, events = testEvents)
-            ) {
-                DayEvent(event = it) {}
+                swipeState = rememberSwipeableState(initialValue = SwipingStates.Expanded)
+            ),
+            dayContent = { day ->
+                DayGrid(
+                    state = rememberDayGridState(day = day, events = testEvents),
+                    eventUi = { event ->
+                        DayEvent(event = event) {}
+                    }
+                )
             }
-        }
+        )
     }
 }
