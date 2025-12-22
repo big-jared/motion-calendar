@@ -15,14 +15,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.CalendarViewDay
+import androidx.compose.material.icons.filled.CalendarViewWeek
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.FilterChip
@@ -36,9 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.capitalize
@@ -56,6 +55,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.bigjared.motion.calendar.common.DragBar
 import org.bigjared.motion.calendar.common.LocalPlatform
 import org.bigjared.motion.calendar.common.Platform
+import org.bigjared.motion.calendar.common.isDesktopOrWeb
 import org.bigjared.motion.calendar.util.monthDays
 import org.bigjared.motion.calendar.util.startOfMonth
 import org.bigjared.motion.calendar.util.startOfWeek
@@ -92,7 +92,7 @@ internal fun DefaultHeader(
         )
 
         // Navigation buttons for desktop/web
-        if ((platform == Platform.Desktop || platform == Platform.Web) && navigationControls != null) {
+        if (platform.isDesktopOrWeb() && navigationControls != null) {
             Box(
                 modifier = Modifier
                     .padding(start = 16.dp)
@@ -149,13 +149,25 @@ internal fun DefaultHeader(
         FilterChip(
             selected = viewMode == CalendarViewMode.Day,
             onClick = { calendarState.viewMode.value = CalendarViewMode.Day },
-            label = { Text("Day") },
+            label = {
+                Icon(
+                    imageVector = Icons.Filled.CalendarViewDay,
+                    contentDescription = "Day View",
+                    modifier = Modifier.size(18.dp)
+                )
+            },
             modifier = Modifier.padding(end = 8.dp)
         )
         FilterChip(
             selected = viewMode == CalendarViewMode.Week,
             onClick = { calendarState.viewMode.value = CalendarViewMode.Week },
-            label = { Text("Week") }
+            label = {
+                Icon(
+                    imageVector = Icons.Filled.CalendarViewWeek,
+                    contentDescription = "Week View",
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         )
     }
 }
@@ -169,7 +181,7 @@ internal fun DefaultFooter(
 ) {
     val platform = LocalPlatform.current
     Box(modifier = modifier) {
-        if (platform == Platform.Desktop && calendarState != null && onToggleExpand != null) {
+        if (platform.isDesktopOrWeb() && calendarState != null && onToggleExpand != null) {
             // Desktop: Show dropdown arrow button
             Row(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 8.dp),
@@ -224,13 +236,10 @@ fun CalendarHeader(
     onToggleExpand: (() -> Unit)? = null,
 ) {
     val platform = LocalPlatform.current
-    val background = colors.backgroundGradientColorLow
-    val intermediate = colors.backgroundGradientColorMed
-    val primary = colors.backgroundGradientColorHigh
     val now = remember { now().toLocalDateTime(TimeZone.currentSystemDefault()).date }
 
-    // Use rectangular shape on desktop, rounded on mobile
-    val headerShape = if (platform == Platform.Desktop) {
+    // Use rectangular shape on desktop/web, rounded on mobile
+    val headerShape = if (platform.isDesktopOrWeb()) {
         RectangleShape
     } else {
         RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)
@@ -239,19 +248,9 @@ fun CalendarHeader(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(colors.backgroundColor)
             .clip(headerShape)
-            .drawBehind {
-                this.drawRect(
-                    Brush.linearGradient(
-                        0.0f to background,
-                        0.5f to intermediate,
-                        1.0f to primary,
-                        start = Offset(0.0f, 0.0f),
-                        end = Offset(0.0f, size.height),
-                    )
-                )
-            }
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .statusBarsPadding()
     ) {
         header?.invoke()
         CollapsedWeekContent(
@@ -293,7 +292,8 @@ fun CollapsedWeekContent(
             modifier = modifier.fillMaxWidth().padding(horizontal = 4.dp),
             state = weekPagerState,
             verticalAlignment = Alignment.Top,
-            key = { page -> page }
+            key = { page -> page },
+            beyondViewportPageCount = 1
         ) { _ ->
             val startOfWeekForPageContent = remember(weekPagerState.currentPage) {
                 now.minus(startingWeekPage - weekPagerState.currentPage, DateTimeUnit.WEEK).startOfWeek()

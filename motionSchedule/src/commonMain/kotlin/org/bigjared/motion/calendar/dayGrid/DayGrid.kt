@@ -1,5 +1,7 @@
 package org.bigjared.motion.calendar.dayGrid
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.OverscrollEffect
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -37,7 +39,9 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.delay
@@ -47,7 +51,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.bigjared.motion.calendar.calendar.MotionCalendarColors
 import org.bigjared.motion.calendar.calendar.motionCalendarColors
-import org.bigjared.motion.calendar.common.DashedVerticalDivider
+import org.bigjared.motion.calendar.common.VerticalDivider
 import org.bigjared.motion.calendar.util.isToday
 import org.bigjared.motion.calendar.util.plus
 import org.bigjared.motion.calendar.util.toHourMinuteString
@@ -70,6 +74,7 @@ data class GridRange(val start: LocalTime, val duration: Duration) {
     fun elements(): Int = (duration / increment).toInt()
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun <T : TimedEvent> DayGrid(
     modifier: Modifier = Modifier,
@@ -79,14 +84,14 @@ fun <T : TimedEvent> DayGrid(
         gridRange = defaultGridRange
     ),
     colors: MotionCalendarColors = motionCalendarColors(),
-    height: Dp = 1000.dp,
+    height: Dp = 1600.dp,
     eventUi: @Composable (T) -> Unit = { event -> BasicDayEvent(event = event) },
     initialScrollTime: LocalTime = LocalTime(7, 45),
     onLongClickAtTime: ((LocalTime) -> Unit)? = null,
     showTimeLabels: Boolean = true,
     sharedScrollState: ScrollState? = null,
     eventLabelPaddingOverride: Boolean? = null,
-    horizontalDividerSolid: Boolean = false,
+    horizontalDividerSolid: Boolean = true,
     showLeadingVerticalDivider: Boolean = false
 ) {
     val localDensity = LocalDensity.current
@@ -142,7 +147,25 @@ fun <T : TimedEvent> DayGrid(
         modifier = modifier
             .fillMaxWidth()
             .height(height)
-            .verticalScroll(scrollState)
+            .verticalScroll(scrollState, overscrollEffect = object : OverscrollEffect {
+                override val effectModifier: Modifier = Modifier
+                override val isInProgress: Boolean = false
+
+                override suspend fun applyToFling(
+                    velocity: Velocity,
+                    performFling: suspend (Velocity) -> Velocity
+                ) {
+                    performFling(velocity)
+                }
+
+                override fun applyToScroll(
+                    delta: Offset,
+                    source: NestedScrollSource,
+                    performScroll: (Offset) -> Offset
+                ): Offset {
+                    return performScroll(delta)
+                }
+            })
             .pointerInput(Unit) {
                 detectTapGestures(
                     onLongPress = { offset ->
@@ -162,10 +185,9 @@ fun <T : TimedEvent> DayGrid(
             }
     ) {
         if (showLeadingVerticalDivider) {
-            DashedVerticalDivider(
+            VerticalDivider(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .width(1.dp)
                     .zIndex(1f)
             )
         }

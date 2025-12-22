@@ -15,7 +15,7 @@ import kotlin.time.Duration
 
 fun LocalDate.startOfWeek(): LocalDate {
     var start = this
-    while (start.dayOfWeek != DayOfWeek.MONDAY) {
+    while (start.dayOfWeek != DayOfWeek.SUNDAY) {
         start = start.minus(1, DateTimeUnit.DAY)
     }
     return start

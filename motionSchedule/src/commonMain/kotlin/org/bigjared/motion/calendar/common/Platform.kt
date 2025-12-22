@@ -26,3 +26,9 @@ val LocalPlatform = staticCompositionLocalOf { getPlatform() }
  */
 @Composable
 fun isDesktopPlatform(): Boolean = LocalPlatform.current == Platform.Desktop
+
+/**
+ * Returns whether the current platform is desktop or web (non-mobile).
+ * Web behaves the same as desktop for UI purposes.
+ */
+fun Platform.isDesktopOrWeb(): Boolean = this == Platform.Desktop || this == Platform.Web

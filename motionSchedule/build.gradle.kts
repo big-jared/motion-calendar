@@ -13,7 +13,7 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.28.0"
 }
 
-val version = "1.0.0"
+val version = "1.0.1"
 
 mavenPublishing {
     // Define coordinates for the published artifact
@@ -113,6 +113,7 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material)
             implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
