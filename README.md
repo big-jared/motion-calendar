@@ -26,7 +26,7 @@ https://github.com/user-attachments/assets/d1eed4ff-779c-4672-a6af-0236b2803c9e
 ## Installation
 
 ```kotlin
-implementation("io.github.big-jared:motion-calendar:1.0.0")
+implementation("io.github.big-jared:motion-calendar:1.0.1")
 ```
 
 ## Basic Usage
