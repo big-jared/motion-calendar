@@ -2,17 +2,19 @@ package org.bigjared.motion.calendar
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,7 +50,7 @@ import org.bigjared.motion.calendar.calendar.CalendarViewMode
 import org.bigjared.motion.calendar.calendar.MotionCalender
 import org.bigjared.motion.calendar.calendar.SwipingStates
 import org.bigjared.motion.calendar.calendar.rememberMotionCalendarState
-import org.bigjared.motion.calendar.common.DashedVerticalDivider
+import org.bigjared.motion.calendar.common.VerticalDivider
 import org.bigjared.motion.calendar.dayGrid.DayGrid
 import org.bigjared.motion.calendar.dayGrid.GridRange
 import org.bigjared.motion.calendar.dayGrid.rememberDayGridState
@@ -56,13 +58,23 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.time.Duration.Companion.hours
 
 @Composable
-fun EventIndicator(modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier.padding(2.dp).size(5.dp).align(Alignment.Center).background(
-                shape = CircleShape, color = MaterialTheme.colorScheme.primary
-            )
-        )
+fun EventIndicator(
+    modifier: Modifier = Modifier,
+    events: Set<SampleTimedEvent>?
+) {
+    Box(modifier.fillMaxWidth().padding(bottom = 2.dp)) {
+        Row(modifier = Modifier.align(Alignment.Center)) {
+            // Always render at least one transparent dot for consistent height
+            val colors = events?.map { it.color }?.toSet()?.take(3) ?: listOf(Color.Transparent)
+            colors.forEach { color ->
+                Box(
+                    modifier = Modifier
+                        .padding(2.dp)
+                        .size(5.dp)
+                        .background(shape = CircleShape, color = color)
+                )
+            }
+        }
     }
 }
 
@@ -78,10 +90,8 @@ fun App() {
         // Shared scroll state for week view synchronization
         val sharedScrollState = rememberScrollState()
 
-        // Current time for initial scroll position
-        val currentTime = remember {
-            now().toLocalDateTime(TimeZone.currentSystemDefault()).time
-        }
+        // Fixed initial scroll position (like Homeroom)
+        val initialScrollTime = LocalTime(7, 45)
 
         // 24-hour grid range
         val gridRange = remember {
@@ -97,7 +107,7 @@ fun App() {
             })
         }
 
-        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).navigationBarsPadding()) {
             Column(modifier = Modifier.fillMaxSize()) {
                 val calendarState = rememberMotionCalendarState(
                     selectedDateMs = now().toEpochMilliseconds(),
@@ -110,9 +120,7 @@ fun App() {
                     dayDecoration = CalendarDayDecoration(
                         alignment = CalendarDecorationAlignment.Below,
                         content = { day ->
-                            if (events.containsKey(day)) {
-                                EventIndicator()
-                            }
+                            EventIndicator(events = events[day])
                         }
                     ),
                     getEventsForDate = { day -> events[day]?.toList() ?: emptyList() },
@@ -124,7 +132,7 @@ fun App() {
                                 events = events[day] ?: emptySet(),
                                 gridRange = gridRange
                             ),
-                            initialScrollTime = currentTime,
+                            initialScrollTime = initialScrollTime,
                             eventUi = { sampleTimedEvent ->
                                 DayEvent(event = sampleTimedEvent, selectEvent = { event ->
                                     eventDialogState = event
@@ -138,7 +146,7 @@ fun App() {
                             events = events,
                             gridRange = gridRange,
                             sharedScrollState = sharedScrollState,
-                            initialScrollTime = currentTime,
+                            initialScrollTime = initialScrollTime,
                             onEventSelected = { event ->
                                 eventDialogState = event
                             }
@@ -159,30 +167,34 @@ fun WeekView(
     initialScrollTime: LocalTime,
     onEventSelected: (SampleTimedEvent) -> Unit
 ) {
-    Row(modifier = Modifier.fillMaxSize()) {
-        repeat(7) { dayOffset ->
-            val day = weekStart.plus(dayOffset, DateTimeUnit.DAY)
-            val isFirstDay = dayOffset == 0
+    Row(Modifier.fillMaxSize()) {
+        for (i in 0..6) {
+            if (i > 0) {
+                VerticalDivider()
+            }
+            val day = weekStart.plus(i, DateTimeUnit.DAY)
 
-            Box(modifier = Modifier.weight(1f)) {
-                DayGrid(
-                    modifier = Modifier.fillMaxSize(),
-                    state = rememberDayGridState(
-                        day = day,
-                        events = events[day] ?: emptySet(),
-                        gridRange = gridRange
-                    ),
-                    sharedScrollState = sharedScrollState,
-                    initialScrollTime = initialScrollTime,
-                    showTimeLabels = isFirstDay,
-                    eventLabelPaddingOverride = isFirstDay,
-                    showLeadingVerticalDivider = !isFirstDay,
-                    eventUi = { sampleTimedEvent ->
-                        DayEvent(event = sampleTimedEvent, selectEvent = { event ->
-                            onEventSelected(event)
-                        })
-                    }
-                )
+            Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    DayGrid(
+                        modifier = Modifier.fillMaxSize(),
+                        state = rememberDayGridState(
+                            day = day,
+                            events = events[day] ?: emptySet(),
+                            gridRange = gridRange
+                        ),
+                        sharedScrollState = sharedScrollState,
+                        initialScrollTime = initialScrollTime,
+                        showTimeLabels = (i == 0),
+                        eventLabelPaddingOverride = false,
+                        horizontalDividerSolid = true,
+                        eventUi = { sampleTimedEvent ->
+                            DayEvent(event = sampleTimedEvent, selectEvent = { event ->
+                                onEventSelected(event)
+                            })
+                        }
+                    )
+                }
             }
         }
     }
@@ -202,44 +214,52 @@ fun EventDialog(modifier: Modifier = Modifier, event: SampleTimedEvent, onDismis
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DayEvent(
     modifier: Modifier = Modifier,
     event: SampleTimedEvent,
     selectEvent: (SampleTimedEvent) -> Unit
 ) {
-    Column(modifier.fillMaxSize().background(
-        shape = RoundedCornerShape(8.dp), color = event.color
-    ).clip(RoundedCornerShape(8.dp)).clickable {
-        selectEvent(event)
-    }.padding(horizontal = 4.dp, vertical = 4.dp)
+    val showTime = event.duration.inWholeMinutes >= 20
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                color = event.color.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(6.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = event.color,
+                shape = RoundedCornerShape(6.dp)
+            )
+            .clip(RoundedCornerShape(6.dp))
+            .clickable { selectEvent(event) }
+            .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
-        FlowRow {
-            Text(
-                modifier = Modifier.weight(1f),
-                text = event.name,
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Medium,
-                color = Color.White
-            )
-            Text(
-                modifier = Modifier.align(Alignment.CenterVertically),
-                text = "${event.start.toHourMinuteString(showAmPm = false)}-${
-                    event.end.toHourMinuteString(
-                        showAmPm = false
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = event.name,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = event.color,
+                    maxLines = 1
+                )
+                if (showTime) {
+                    Text(
+                        text = "${event.start.toHourMinuteString(showAmPm = false)}-${event.end.toHourMinuteString(showAmPm = false)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Normal,
+                        color = event.color
                     )
-                }",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Light,
-                color = Color.White
-            )
+                }
+            }
         }
-        Text(
-            text = event.description,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Light,
-            color = Color.White
-        )
     }
 }

@@ -29,6 +29,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.bigjared.motion.calendar.common.Platform
 import org.bigjared.motion.calendar.common.LocalPlatform
+import org.bigjared.motion.calendar.common.isDesktopOrWeb
 import org.bigjared.motion.calendar.util.startOfMonth
 import org.bigjared.motion.calendar.util.startOfWeek
 import kotlin.math.abs
@@ -92,7 +93,7 @@ data class CalendarNavigationControls(
  */
 @OptIn(ExperimentalFoundationApi::class)
 private fun Modifier.disableDesktopScrolling(platform: Platform): Modifier {
-    return if (platform == Platform.Desktop) {
+    return if (platform.isDesktopOrWeb()) {
         this.pointerInput(Unit) {
             awaitPointerEventScope {
                 while (true) {
@@ -308,7 +309,7 @@ fun MotionCalender(
                     HorizontalPager(
                         modifier = Modifier.fillMaxWidth().disableDesktopScrolling(platform),
                         state = dayPagerState,
-                        userScrollEnabled = platform != Platform.Desktop
+                        userScrollEnabled = !platform.isDesktopOrWeb()
                     ) { page ->
                         val date = now.minus(startingDayPage - page, DateTimeUnit.DAY)
                         dayContent(date)
@@ -318,7 +319,7 @@ fun MotionCalender(
                     HorizontalPager(
                         modifier = Modifier.fillMaxWidth().disableDesktopScrolling(platform),
                         state = weekPagerState,
-                        userScrollEnabled = platform != Platform.Desktop
+                        userScrollEnabled = !platform.isDesktopOrWeb()
                     ) { page ->
                         val weekStart = now.minus(startingWeekPage - page, DateTimeUnit.WEEK).startOfWeek()
                         weekContent(weekStart)
@@ -328,7 +329,7 @@ fun MotionCalender(
                     HorizontalPager(
                         modifier = Modifier.fillMaxWidth().disableDesktopScrolling(platform),
                         state = monthPagerState,
-                        userScrollEnabled = platform != Platform.Desktop
+                        userScrollEnabled = !platform.isDesktopOrWeb()
                     ) { page ->
                         val monthStart = now.minus(startingMonthPage - page, DateTimeUnit.MONTH).startOfMonth()
                         monthContent(monthStart)

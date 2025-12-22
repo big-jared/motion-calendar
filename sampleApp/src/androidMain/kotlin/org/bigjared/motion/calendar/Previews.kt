@@ -24,7 +24,7 @@ private fun CalendarPreview() {
             calendarState = rememberMotionCalendarState(selectedDateMs = now().toEpochMilliseconds()),
             dayContent = { day ->
                 DayGrid(
-                    state = rememberDayGridState(day = day, events = simpleTestEvents),
+                    state = rememberDayGridState(day = day, events = mondayEvents),
                     eventUi = { event ->
                         DayEvent(event = event) {}
                     }
@@ -43,7 +43,7 @@ private fun CalendarPreviewDark() {
             calendarState = rememberMotionCalendarState(selectedDateMs = now().toEpochMilliseconds()),
             dayContent = { day ->
                 DayGrid(
-                    state = rememberDayGridState(day = day, events = testEvents),
+                    state = rememberDayGridState(day = day, events = mondayEvents),
                     eventUi = { event ->
                         DayEvent(event = event) {}
                     }
@@ -65,7 +65,7 @@ private fun CalendarExpandedPreview() {
             ),
             dayContent = { day ->
                 DayGrid(
-                    state = rememberDayGridState(day = day, events = testEvents),
+                    state = rememberDayGridState(day = day, events = mondayEvents),
                     eventUi = { event ->
                         DayEvent(event = event) {}
                     }
@@ -87,7 +87,7 @@ private fun CalendarExpandedDarkPreview() {
             ),
             dayContent = { day ->
                 DayGrid(
-                    state = rememberDayGridState(day = day, events = testEvents),
+                    state = rememberDayGridState(day = day, events = mondayEvents),
                     eventUi = { event ->
                         DayEvent(event = event) {}
                     }
