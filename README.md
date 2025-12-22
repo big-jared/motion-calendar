@@ -14,7 +14,14 @@ Targeting Android, iOS, Desktop and WASM.
 - DayGrid component for timed event display
 - Week view with synchronized scrolling
 
-https://github.com/user-attachments/assets/426e5058-470c-4079-b87f-0baab161d2d8
+https://github.com/user-attachments/assets/0169bc11-e860-466f-834c-ae2d056eee1b
+
+https://github.com/user-attachments/assets/4eec7c67-9cc4-4b7b-a169-0680f219871f
+
+https://github.com/user-attachments/assets/0a8389b6-b968-4f7f-9d00-110c8858e4e3
+
+https://github.com/user-attachments/assets/d1eed4ff-779c-4672-a6af-0236b2803c9e
+
 
 ## Installation
 
